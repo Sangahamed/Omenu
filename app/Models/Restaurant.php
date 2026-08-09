@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Scout\Searchable;
 
 
 class Restaurant extends Model
 {
-    use HasFactory;
+    use HasFactory,Searchable;
 
     protected $fillable = [
         'user_id', 'name', 'slug', 'description', 'logo', 'cover_image',
@@ -46,5 +47,18 @@ class Restaurant extends Model
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function toSearchableArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'description' => $this->description,
+            'city' => $this->city,
+            'cuisine_type' => $this->cuisine_type,
+            'address' => $this->address,
+        ];
     }
 }

@@ -36,5 +36,9 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $client = Role::create(['name' => 'client']);
         $client->givePermissionTo(['view restaurants']);
+
+        $delivery = Role::create(['name' => 'delivery']);
+$delivery->givePermissionTo(['view orders', 'update delivery status']);
+
     }
 }

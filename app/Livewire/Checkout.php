@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Menu;
+use App\Events\OrderPlaced;
 use Livewire\Component;
 use Stripe\Stripe;
 use Livewire\Attributes\Layout;
@@ -76,58 +78,32 @@ class Checkout extends Component
     }
 
     public function placeOrder()
-{
-    $this->validate();
+    {
+        $this->validate();
 
-    if (empty($this->cart)) {
-        return $this->addError('cart', 'Votre panier est vide');
-    }
-
-    // 1. Grouper les articles du panier par ID de restaurant
-    $groupedCart = [];
-    foreach ($this->cart as $item) {
-        $menu = Menu::find($item['id']);
-        $restaurantId = $menu?->restaurant_id;
-        $groupedCart[$restaurantId][] = $item;
-    }
-
-    $isMultiVendor = count($groupedCart) > 1;
-
-    // 2. Créer la Commande Principale (Parent)
-    $parentOrder = Order::create([
-        'user_id' => Auth::id(),
-        'restaurant_id' => !$isMultiVendor ? array_key_first($groupedCart) : null, // null si multi-restaurant
-        'subtotal' => $this->subtotal,
-        'delivery_fee' => $this->delivery_fee,
-        'tax' => $this->tax,
-        'discount' => 0,
-        'total' => $this->total,
-        'status' => 'pending',
-        'payment_method' => $this->payment_method,
-        'payment_status' => 'unpaid',
-        'delivery_address' => $this->delivery_address,
-        'delivery_instructions' => $this->delivery_instructions,
-        'customer_name' => $this->customer_name,
-        'customer_phone' => $this->customer_phone,
-    ]);
-
-    // 3. Si multi-restaurant, on crée des sous-commandes pour chaque établissement
-    foreach ($groupedCart as $restaurantId => $items) {
-        
-        $subtotalSub = 0;
-        foreach ($items as $item) {
-            $subtotalSub += $item['price'] * $item['quantity'];
+        if (empty($this->cart)) {
+            return $this->addError('cart', 'Votre panier est vide');
         }
 
-        // Si multi-vendeur, on crée un ticket de commande par restaurant
-        $currentOrder = $isMultiVendor ? Order::create([
-            'parent_id' => $parentOrder->id,
+        // 1. Grouper les articles du panier par ID de restaurant
+        $groupedCart = [];
+        foreach ($this->cart as $item) {
+            $menu = Menu::find($item['id']);
+            $restaurantId = $menu?->restaurant_id;
+            $groupedCart[$restaurantId][] = $item;
+        }
+
+        $isMultiVendor = count($groupedCart) > 1;
+
+        // 2. Créer la Commande Principale (Parent)
+        $parentOrder = Order::create([
             'user_id' => Auth::id(),
-            'restaurant_id' => $restaurantId,
-            'subtotal' => $subtotalSub,
-            'delivery_fee' => 0, // Les frais de port globaux restent sur la commande parente
-            'tax' => $subtotalSub * 0.18,
-            'total' => $subtotalSub * 1.18,
+            'restaurant_id' => !$isMultiVendor ? array_key_first($groupedCart) : null, // null si multi-restaurant
+            'subtotal' => $this->subtotal,
+            'delivery_fee' => $this->delivery_fee,
+            'tax' => $this->tax,
+            'discount' => 0,
+            'total' => $this->total,
             'status' => 'pending',
             'payment_method' => $this->payment_method,
             'payment_status' => 'unpaid',
@@ -135,31 +111,59 @@ class Checkout extends Component
             'delivery_instructions' => $this->delivery_instructions,
             'customer_name' => $this->customer_name,
             'customer_phone' => $this->customer_phone,
-        ]) : $parentOrder;
+        ]);
+        event(new OrderPlaced($order));
 
-        // 4. Associer les plats à la commande correspondante
-        foreach ($items as $item) {
-            OrderItem::create([
-                'order_id' => $currentOrder->id,
-                'menu_id' => $item['id'],
-                'name' => $item['name'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['price'],
-                'subtotal' => $item['price'] * $item['quantity'],
-                'options' => $item['options'] ?? [],
-            ]);
+        // 3. Si multi-restaurant, on crée des sous-commandes pour chaque établissement
+        foreach ($groupedCart as $restaurantId => $items) {
+            
+            $subtotalSub = 0;
+            foreach ($items as $item) {
+                $subtotalSub += $item['price'] * $item['quantity'];
+            }
+
+            // Si multi-vendeur, on crée un ticket de commande par restaurant
+            $currentOrder = $isMultiVendor ? Order::create([
+                'parent_id' => $parentOrder->id,
+                'user_id' => Auth::id(),
+                'restaurant_id' => $restaurantId,
+                'subtotal' => $subtotalSub,
+                'delivery_fee' => 0, // Les frais de port globaux restent sur la commande parente
+                'tax' => $subtotalSub * 0.18,
+                'total' => $subtotalSub * 1.18,
+                'status' => 'pending',
+                'payment_method' => $this->payment_method,
+                'payment_status' => 'unpaid',
+                'delivery_address' => $this->delivery_address,
+                'delivery_instructions' => $this->delivery_instructions,
+                'customer_name' => $this->customer_name,
+                'customer_phone' => $this->customer_phone,
+            ]) : $parentOrder;
+
+            // 4. Associer les plats à la commande correspondante
+            foreach ($items as $item) {
+                OrderItem::create([
+                    'order_id' => $currentOrder->id,
+                    'menu_id' => $item['id'],
+                    'name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['price'],
+                    'subtotal' => $item['price'] * $item['quantity'],
+                    'options' => $item['options'] ?? [],
+                ]);
+            }
+            
         }
-    }
 
-    // 5. Redirection vers le paiement Stripe de la commande parente (globale)
-    if ($this->payment_method === 'stripe') {
-        return $this->initiateStripePayment($parentOrder);
-    }
+        // 5. Redirection vers le paiement Stripe de la commande parente (globale)
+        if ($this->payment_method === 'stripe') {
+            return $this->initiateStripePayment($parentOrder);
+        }
 
-    session()->forget('cart');
-    return redirect()->route('order.confirmation', $parentOrder->id)
-        ->with('success', 'Votre commande multi-restaurant a été enregistrée avec succès !');
-}
+        session()->forget('cart');
+        return redirect()->route('order.confirmation', $parentOrder->id)
+            ->with('success', 'Votre commande multi-restaurant a été enregistrée avec succès !');
+    }
 
     protected function initiateStripePayment($order)
     {

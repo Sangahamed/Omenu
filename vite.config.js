@@ -8,4 +8,15 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        minify: 'esbuild',
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['alpinejs', 'axios', 'chart.js'],
+                    leaflet: ['leaflet', 'leaflet.markercluster'],
+                }
+            }
+        }
+    }
 });

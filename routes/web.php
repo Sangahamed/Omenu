@@ -5,6 +5,9 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RestaurantController;
 use App\Livewire\RestaurantMap;
 use App\Livewire\Checkout;
+use App\Livewire\Restaurant\Dashboard;
+use App\Livewire\Delivery\Dashboard as DeliveryDashboard;
+use App\Livewire\OrderTracking;
 
 // ====================================================
 // ROUTES PUBLIQUES
@@ -58,6 +61,8 @@ Route::middleware(['auth', 'role:restaurant'])->prefix('restaurant')->group(func
 
     Route::post('/', [RestaurantController::class, 'store'])
         ->name('restaurants.store');
+        
+    Route::get('/restaurant/dashboard', Dashboard::class)->name('restaurant.dashboard');
 });
 
 // ====================================================
@@ -75,10 +80,41 @@ Route::middleware(['auth', 'role:super-admin|admin'])->prefix('admin')->group(fu
         ->name('admin.restaurants');
 });
 
+Route::middleware(['auth', 'role:delivery'])->prefix('delivery')->group(function () {
+    Route::get('/dashboard', DeliveryDashboard::class)->name('delivery.dashboard');
+});
 
+// Suivi commande (client)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/order/tracking/{orderId}', OrderTracking::class)->name('order.tracking');
+});
 
 // ====================================================
 // ROUTES D'AUTHENTIFICATION (Breeze)
 // ====================================================
+use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Admin\RestaurantManager as AdminRestaurantManager;
+use App\Livewire\Admin\UserManager;
 
+Route::middleware(['auth', 'role:super-admin|admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
+    Route::get('/restaurants', AdminRestaurantManager::class)->name('admin.restaurants');
+    Route::get('/users', UserManager::class)->name('admin.users');
+});
+
+// Recherche publique (API)
+Route::get('/api/search', function (\Illuminate\Http\Request $request) {
+    $query = $request->get('q');
+    $restaurants = \App\Models\Restaurant::search($query)
+        ->take(10)
+        ->get();
+    $menus = \App\Models\Menu::search($query)
+        ->take(10)
+        ->get();
+
+    return response()->json([
+        'restaurants' => $restaurants,
+        'menus' => $menus,
+    ]);
+})->name('api.search');
 require __DIR__.'/auth.php';

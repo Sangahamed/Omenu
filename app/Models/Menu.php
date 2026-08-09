@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Scout\Searchable;
+
 
 class Menu extends Model
 {
-    use HasFactory;
+    use HasFactory,Searchable;
 
     protected $fillable = [
         'restaurant_id', 'name', 'description', 'category', 'price',
@@ -23,6 +25,23 @@ class Menu extends Model
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class);
+    }
+
+    public function toSearchableArray()
+    {
+        return [
+            'id' => $this->id,
+            'restaurant_id' => $this->restaurant_id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'category' => $this->category,
+            'price' => $this->price,
+        ];
+    }
+
+    public function searchableAs()
+    {
+        return 'menus_index';
     }
 
 
