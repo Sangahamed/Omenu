@@ -34,7 +34,10 @@ new #[Layout('layouts.guest')] class extends Component
 }; ?>
 
 <div>
-    <div class="mb-4 text-sm text-gray-600">
+    <h1 class="font-display text-2xl font-semibold text-brand-black tracking-tight mb-1">
+        Confirmez votre mot de passe
+    </h1>
+    <div class="mb-6 text-sm text-ink-soft">
         {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
     </div>
 

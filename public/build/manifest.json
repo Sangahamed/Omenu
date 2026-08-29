@@ -1,0 +1,40 @@
+{
+  "_leaflet-2IpqudzF.js": {
+    "file": "assets/leaflet-2IpqudzF.js",
+    "name": "leaflet",
+    "imports": [
+      "_rolldown-runtime-QTnfLwEv.js"
+    ]
+  },
+  "_rolldown-runtime-QTnfLwEv.js": {
+    "file": "assets/rolldown-runtime-QTnfLwEv.js",
+    "name": "rolldown-runtime"
+  },
+  "_vendor-DCoCHD-h.js": {
+    "file": "assets/vendor-DCoCHD-h.js",
+    "name": "vendor",
+    "imports": [
+      "_rolldown-runtime-QTnfLwEv.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-CN-0bAgn.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-DwTEyO7T.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-QTnfLwEv.js",
+      "_vendor-DCoCHD-h.js",
+      "_leaflet-2IpqudzF.js"
+    ]
+  }
+}

@@ -112,7 +112,7 @@ class Checkout extends Component
             'customer_name' => $this->customer_name,
             'customer_phone' => $this->customer_phone,
         ]);
-        event(new OrderPlaced($order));
+        event(new OrderPlaced($parentOrder));
 
         // 3. Si multi-restaurant, on crée des sous-commandes pour chaque établissement
         foreach ($groupedCart as $restaurantId => $items) {

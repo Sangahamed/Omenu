@@ -31,10 +31,8 @@ class DatabaseSeeder extends Seeder
             $admin->assignRole('super-admin');
         }
 
-        // 3. Création groupée des Restaurants et de leurs Menus (Optimisation des requêtes SQL)
-        // La méthode has() évite la boucle foreach lente en base de données
-        Restaurant::factory(30)
-            ->has(Menu::factory()->count(5), 'menus')
-            ->create();
+        // 3. Contenu de démonstration : 10 restaurants abidjanais, 48 plats,
+        //    illustrés par les photos de storage/app/public.
+        $this->call(DemoContentSeeder::class);
     }
 }

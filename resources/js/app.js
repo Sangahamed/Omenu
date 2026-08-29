@@ -17,7 +17,9 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-if (typeof window.Echo === 'undefined') {
+// Sans VITE_REVERB_APP_KEY, Pusher lève « You must pass your app key » : une
+// exception non rattrapée qui interrompt tout le bundle, carte comprise.
+if (typeof window.Echo === 'undefined' && import.meta.env.VITE_REVERB_APP_KEY) {
     window.Echo = new Echo({
         broadcaster: 'reverb',
         key: import.meta.env.VITE_REVERB_APP_KEY,
@@ -30,7 +32,7 @@ if (typeof window.Echo === 'undefined') {
 }
 
 // Pour le restaurant
-if (window.authUserId) {
+if (window.authUserId && window.Echo) {
     // On suppose que l'utilisateur connecté est un restaurateur
     // On récupère son restaurant_id via une route ou un attribut
     fetch('/api/restaurant-id')

@@ -133,8 +133,17 @@ class RestaurantMap extends Component
                 ];
             });
 
+        // Les types de cuisine viennent de la base : une liste écrite en dur
+        // dans la vue finit toujours par diverger des valeurs réelles.
+        $cuisines = Restaurant::where('is_active', true)
+            ->whereNotNull('cuisine_type')
+            ->distinct()
+            ->orderBy('cuisine_type')
+            ->pluck('cuisine_type');
+
         return view('livewire.restaurant-map', [
-            'menus' => $menusData
+            'menus' => $menusData,
+            'cuisines' => $cuisines,
         ]);
     }
 }

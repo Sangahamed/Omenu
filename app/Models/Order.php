@@ -70,14 +70,15 @@ class Order extends Model
 
     public function getStatusColorAttribute(): string
     {
+        // Classes alignées sur le design system de production (.badge-*)
         return [
-            'pending' => 'bg-yellow-500',
-            'accepted' => 'bg-blue-500',
-            'preparing' => 'bg-orange-500',
-            'ready' => 'bg-green-500',
-            'picked_up' => 'bg-indigo-500',
-            'delivered' => 'bg-emerald-600',
-            'cancelled' => 'bg-red-500',
-        ][$this->status] ?? 'bg-gray-500';
+            'pending' => 'badge-en_attente',
+            'accepted' => 'badge-confirmee',
+            'preparing' => 'badge-confirmee',
+            'ready' => 'badge-honoree',
+            'picked_up' => 'badge-honoree',
+            'delivered' => 'badge-honoree',
+            'cancelled' => 'badge-annulee',
+        ][$this->status] ?? 'badge-en_attente';
     }
 }

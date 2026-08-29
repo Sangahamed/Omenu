@@ -10,7 +10,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -27,9 +27,25 @@
     @stack('styles')
 </head>
 
-<body class="bg-slate-950 text-slate-100 font-sans antialiased h-full flex flex-col justify-between">
+<body class="bg-bg text-ink font-sans antialiased h-full flex flex-col justify-between">
     
     @include('components.front.layouts.header')
+
+    @if (session('success'))
+        <div class="flash flash-success container mx-auto mt-4 px-4">
+            <div class="bg-white border border-brand-black text-ink text-sm rounded-sm px-4 py-3">
+                {{ session('success') }}
+            </div>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="flash flash-error container mx-auto mt-4 px-4">
+            <div class="bg-brand-red-soft border border-brand-red text-brand-red text-sm rounded-sm px-4 py-3">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
 
     <main class="flex-1 flex flex-col min-h-0">
         @yield('content')

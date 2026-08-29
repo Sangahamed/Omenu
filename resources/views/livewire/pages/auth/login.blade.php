@@ -25,47 +25,62 @@ new #[Layout('layouts.guest')] class extends Component
 }; ?>
 
 <div>
+    <h1 class="font-display text-2xl font-semibold text-brand-black tracking-tight mb-1">
+        Bon retour parmi nous
+    </h1>
+    <p class="text-sm text-ink-soft mb-6">
+        Connectez-vous pour retrouver vos adresses et vos commandes.
+    </p>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form wire:submit="login">
+    <form wire:submit="login" class="space-y-5">
         <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="form.email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
+            <x-input-label for="email" value="Adresse e-mail" />
+            <div class="relative mt-1">
+                <i class="ri-mail-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft text-sm"></i>
+                <x-text-input wire:model="form.email" id="email" class="block w-full pl-9" type="email" name="email" required autofocus autocomplete="username" placeholder="vous@exemple.com" />
+            </div>
             <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
         </div>
 
         <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input wire:model="form.password" id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
+        <div>
+            <div class="flex items-center justify-between">
+                <x-input-label for="password" value="Mot de passe" />
+                @if (Route::has('password.request'))
+                    <a class="text-xs text-brand-red hover:text-brand-red-hover font-medium" href="{{ route('password.request') }}" wire:navigate>
+                        Mot de passe oublié ?
+                    </a>
+                @endif
+            </div>
+            <div class="relative mt-1">
+                <i class="ri-lock-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft text-sm"></i>
+                <x-text-input wire:model="form.password" id="password" class="block w-full pl-9"
+                                type="password"
+                                name="password"
+                                required autocomplete="current-password" placeholder="••••••••" />
+            </div>
             <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
         </div>
 
         <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember" class="inline-flex items-center">
-                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+        <label for="remember" class="flex items-center gap-2 cursor-pointer select-none">
+            <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-border text-brand-black shadow-sm focus:ring-brand-red" name="remember">
+            <span class="text-sm text-ink-soft">Se souvenir de moi</span>
+        </label>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
+        <x-primary-button class="w-full justify-center py-3">
+            Se connecter
+        </x-primary-button>
     </form>
+
+    <p class="text-center text-sm text-ink-soft mt-8">
+        Pas encore de compte ?
+        <a href="{{ route('register') }}" wire:navigate class="text-brand-red hover:text-brand-red-hover font-semibold">
+            Créer un compte
+        </a>
+    </p>
 </div>

@@ -1,0 +1,5 @@
+<button <?php echo e($attributes->merge(['type' => 'submit', 'class' => 'inline-flex items-center px-4 py-2 bg-brand-black border border-transparent rounded-sm font-semibold text-xs text-white uppercase tracking-widest hover:bg-brand-black-2 focus:bg-brand-black-2 active:bg-brand-black-2 focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2 transition ease-in-out duration-150'])); ?>>
+    <?php echo e($slot); ?>
+
+</button>
+<?php /**PATH C:\xampp\htdocs\omenu-charte\resources\views/components/primary-button.blade.php ENDPATH**/ ?>

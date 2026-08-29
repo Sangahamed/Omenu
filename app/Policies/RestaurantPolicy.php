@@ -20,7 +20,11 @@ class RestaurantPolicy
 
     public function create(User $user)
     {
-        return $user->hasRole(['super-admin', 'admin', 'restaurant']);
+        // Tout utilisateur connecté peut soumettre son restaurant : c'est
+        // précisément ce qui lui fait obtenir le rôle "restaurant" (voir
+        // RestaurantController::store). Le restreindre aux détenteurs du
+        // rôle créerait une impasse : impossible de le devenir.
+        return true;
     }
 
     public function update(User $user, Restaurant $restaurant)

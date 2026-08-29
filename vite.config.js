@@ -9,12 +9,19 @@ export default defineConfig({
         }),
     ],
     build: {
-        minify: 'esbuild',
+        // Vite 8 n'embarque plus esbuild (le minifieur par défaut est Oxc) :
+        // forcer 'esbuild' ici échouerait sur un paquet introuvable.
         rollupOptions: {
             output: {
-                manualChunks: {
-                    vendor: ['alpinejs', 'axios', 'chart.js'],
-                    leaflet: ['leaflet', 'leaflet.markercluster'],
+                // Vite 8 (Rolldown) n'accepte plus la forme objet : manualChunks doit
+                // être une fonction qui associe un id de module à un nom de chunk.
+                manualChunks(id) {
+                    if (/[\\/]node_modules[\\/](alpinejs|axios|chart\.js)[\\/]/.test(id)) {
+                        return 'vendor';
+                    }
+                    if (/[\\/]node_modules[\\/](leaflet|leaflet\.markercluster)[\\/]/.test(id)) {
+                        return 'leaflet';
+                    }
                 }
             }
         }

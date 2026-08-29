@@ -1,3 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Work+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Focus visible cohérent avec la charte de production (anneau rouge de marque) */
+:focus-visible {
+    outline: 2px solid #A9271E;
+    outline-offset: 2px;
+}
+
+/* Badges de statut — repris tels quels du design system de production */
+@layer components {
+    .badge {
+        @apply inline-block px-3 py-1 rounded-pill text-xs font-semibold border;
+        background: #EFEFEC;
+        border-color: #DEDDD9;
+    }
+    .badge-confirmee, .badge-honoree {
+        @apply bg-white text-brand-black border-brand-black;
+    }
+    .badge-no_show, .badge-annulee {
+        @apply bg-brand-red-soft text-brand-red border-brand-red;
+    }
+    .badge-en_attente {
+        @apply text-ink-soft border-dashed;
+        background: #F4F4F1;
+    }
+
+    /* Bordures de statut du kanban restaurateur — même logique que .statut-* en production */
+    .statut-pending, .statut-accepted {
+        border-left: 4px solid #A9271E;
+    }
+    .statut-preparing, .statut-ready, .statut-picked_up {
+        border-left: 4px solid #121212;
+    }
+    .statut-delivered, .statut-cancelled {
+        border-left: 4px solid #DEDDD9;
+        opacity: 0.7;
+    }
+}

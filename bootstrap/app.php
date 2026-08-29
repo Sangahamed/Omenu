@@ -19,6 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // Derrière un tunnel (ngrok) ou un load balancer, la requête arrive en
+        // HTTP : sans ça Laravel génère des URLs http:// sur une page https://.
+        // Variable d'environnement SYSTÈME (pas .env : cette closure s'exécute
+        // avant son chargement). Absente en production = aucun proxy de confiance.
+        if ($proxies = env('TRUST_PROXIES')) {
+            $middleware->trustProxies(at: $proxies === '*' ? '*' : explode(',', $proxies));
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
