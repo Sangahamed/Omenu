@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Models\CartItem;
 use App\Models\Menu;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
@@ -80,21 +79,10 @@ class Cart extends Component
 
         /*
          * -------------------------------------------------------------
-         * UTILISATEUR CONNECTÉ
+         * AJOUT AU PANIER (SESSION)
          * -------------------------------------------------------------
          */
-        if (Auth::check()) {
-            $this->addToDatabase($menu);
-        }
-
-        /*
-         * -------------------------------------------------------------
-         * UTILISATEUR INVITÉ
-         * -------------------------------------------------------------
-         */
-        else {
-            $this->addToSession($menu);
-        }
+        $this->addToSession($menu);
 
         $this->loadCart();
 
@@ -112,28 +100,7 @@ class Cart extends Component
     }
 
     /**
-     * Ajoute un article au panier BDD pour un utilisateur connecté.
-     */
-    protected function addToDatabase(Menu $menu): void
-    {
-        $cartItem = CartItem::firstOrNew([
-            'user_id' => Auth::id(),
-            'menu_id' => $menu->id,
-        ]);
-
-        $cartItem->quantity = ($cartItem->quantity ?? 0) + 1;
-
-        /*
-         * On conserve le prix actuel du menu au moment
-         * de l'ajout.
-         */
-        $cartItem->price = $menu->price;
-
-        $cartItem->save();
-    }
-
-    /**
-     * Ajoute un article au panier session pour un invité.
+     * Ajoute un article au panier session.
      */
     protected function addToSession(Menu $menu): void
     {
@@ -156,9 +123,7 @@ class Cart extends Component
         }
 
         session()->put('cart', $cart);
-    }
-
-    /**
+    }    /**
      * Vérifie qu'un plat appartient au même restaurant
      * que les articles déjà présents dans le panier.
      */
@@ -171,27 +136,6 @@ class Cart extends Component
             return true;
         }
 
-        /*
-         * Utilisateur connecté :
-         * on vérifie le restaurant du premier article BDD.
-         */
-        if (Auth::check()) {
-            $firstItem = CartItem::with('menu')
-                ->where('user_id', Auth::id())
-                ->first();
-
-            if (!$firstItem || !$firstItem->menu) {
-                return true;
-            }
-
-            return (int) $firstItem->menu->restaurant_id
-                === (int) $menu->restaurant_id;
-        }
-
-        /*
-         * Invité :
-         * on vérifie le premier article de la session.
-         */
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
@@ -200,10 +144,6 @@ class Cart extends Component
 
         $firstItem = reset($cart);
 
-        /*
-         * Compatibilité avec les anciennes structures
-         * de panier qui n'avaient pas restaurant_id.
-         */
         if (!empty($firstItem['restaurant_id'])) {
             return (int) $firstItem['restaurant_id']
                 === (int) $menu->restaurant_id;
@@ -228,17 +168,9 @@ class Cart extends Component
      */
     public function removeItem($menuId): void
     {
-        if (Auth::check()) {
-            CartItem::where('user_id', Auth::id())
-                ->where('menu_id', $menuId)
-                ->delete();
-        } else {
-            $cart = session()->get('cart', []);
-
-            unset($cart[$menuId]);
-
-            session()->put('cart', $cart);
-        }
+        $cart = session()->get('cart', []);
+        unset($cart[$menuId]);
+        session()->put('cart', $cart);
 
         $this->refreshCart();
     }
@@ -250,67 +182,22 @@ class Cart extends Component
     {
         $quantity = (int) $quantity;
 
-        /*
-         * Quantité invalide ou nulle :
-         * on supprime l'article.
-         */
         if ($quantity <= 0) {
             $this->removeItem($menuId);
             return;
         }
 
-        /*
-         * Limite de sécurité pour éviter des quantités absurdes.
-         */
         $quantity = min($quantity, 99);
 
-        /*
-         * UTILISATEUR CONNECTÉ
-         */
-        if (Auth::check()) {
-            $cartItem = CartItem::where('user_id', Auth::id())
-                ->where('menu_id', $menuId)
-                ->first();
+        $cart = session()->get('cart', []);
 
-            if (!$cartItem) {
-                $this->notify(
-                    'error',
-                    'Cet article n’existe plus dans votre panier.'
-                );
-
-                $this->loadCart();
-
-                return;
-            }
-
-            /*
-             * Prix rafraîchi depuis le menu.
-             */
-            $menu = Menu::find($menuId);
-
-            if ($menu) {
-                $cartItem->price = $menu->price;
-            }
-
-            $cartItem->quantity = $quantity;
-            $cartItem->save();
+        if (!isset($cart[$menuId])) {
+            $this->loadCart();
+            return;
         }
 
-        /*
-         * INVITÉ
-         */
-        else {
-            $cart = session()->get('cart', []);
-
-            if (!isset($cart[$menuId])) {
-                $this->loadCart();
-                return;
-            }
-
-            $cart[$menuId]['quantity'] = $quantity;
-
-            session()->put('cart', $cart);
-        }
+        $cart[$menuId]['quantity'] = $quantity;
+        session()->put('cart', $cart);
 
         $this->refreshCart();
     }
@@ -320,11 +207,7 @@ class Cart extends Component
      */
     public function clearCart(): void
     {
-        if (Auth::check()) {
-            CartItem::where('user_id', Auth::id())->delete();
-        } else {
-            session()->forget('cart');
-        }
+        session()->forget('cart');
 
         $this->loadCart();
 
@@ -342,50 +225,14 @@ class Cart extends Component
     }
 
     /**
-     * Recharge le panier depuis la source appropriée.
+     * Recharge le panier depuis la session.
      */
     #[On('cartUpdated')]
     public function loadCart(): void
     {
-        if (Auth::check()) {
-            $this->loadDatabaseCart();
-        } else {
-            $this->loadSessionCart();
-        }
-
+        $this->loadSessionCart();
         $this->calculateTotals();
         $this->updateRestaurantInformation();
-    }
-
-    /**
-     * Charge le panier depuis la BDD.
-     */
-    protected function loadDatabaseCart(): void
-    {
-        $items = CartItem::with('menu.restaurant')
-            ->where('user_id', Auth::id())
-            ->get();
-
-        $this->cart = [];
-
-        foreach ($items as $item) {
-            if (!$item->menu) {
-                continue;
-            }
-
-            $this->cart[$item->menu_id] = [
-                'id' => $item->menu_id,
-                'menu_id' => $item->menu_id,
-                'name' => $item->menu->name,
-                'price' => (float) $item->price,
-                'image' => $item->menu->image,
-                'quantity' => (int) $item->quantity,
-                'restaurant_id' => $item->menu->restaurant_id,
-                'restaurant_name' => $item->menu->restaurant?->name
-                    ?? 'Établissement',
-                'options' => [],
-            ];
-        }
     }
 
     /**

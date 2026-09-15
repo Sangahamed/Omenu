@@ -1,4 +1,22 @@
-<div>
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    {{-- Fiches restaurant en attente de validation --}}
+    @if($stats['pending_restaurants'] > 0)
+        <a href="{{ route('admin.restaurants', ['filter' => 'pending']) }}"
+           class="flex items-center gap-3 bg-brand-red-soft border border-brand-red rounded-md px-5 py-4 mb-6 hover:bg-brand-red hover:text-white transition-colors group">
+            <i class="ri-shield-check-line text-2xl text-brand-red group-hover:text-white"></i>
+            <div class="flex-1">
+                <p class="font-display font-semibold text-sm text-ink group-hover:text-white">
+                    {{ $stats['pending_restaurants'] }}
+                    {{ $stats['pending_restaurants'] > 1 ? 'restaurants attendent' : 'restaurant attend' }} votre validation
+                </p>
+                <p class="text-xs text-ink-soft group-hover:text-white/80">
+                    Tant qu'une fiche n'est pas validée, son propriétaire n'a pas accès à son tableau de bord.
+                </p>
+            </div>
+            <i class="ri-arrow-right-line text-lg text-brand-red group-hover:text-white"></i>
+        </a>
+    @endif
+
     {{-- Statistiques --}}
     <div class="stats-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div class="stat-card bg-white p-4 rounded-md border border-border border-l-4 border-l-brand-black">

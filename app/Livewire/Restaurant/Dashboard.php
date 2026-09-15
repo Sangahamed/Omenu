@@ -90,6 +90,6 @@ class Dashboard extends Component
             'statistics' => $this->statistics,
             'popularMenus' => $this->popularMenus,
             'statuses' => $statuses,
-        ])->layout('components.front.layouts.front');
+        ])->extends('components.front.layouts.front');
     }
 }

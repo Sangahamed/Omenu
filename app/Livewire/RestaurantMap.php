@@ -5,15 +5,12 @@ namespace App\Livewire;
 use App\Models\Restaurant;
 use App\Models\Menu; 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
 
-#[Layout('components.front.layouts.front')]
 class RestaurantMap extends Component
 {
     public $search = '';
     public $cuisine = '';
     public $city = '';
-    public $priceRange = '';
     
     // Propriétés de statut simples
     public $total = 0;
@@ -24,7 +21,6 @@ class RestaurantMap extends Component
         'search' => ['except' => ''],
         'cuisine' => ['except' => ''],
         'city' => ['except' => ''],
-        'priceRange' => ['except' => ''],
         'viewMode' => ['except' => 'map'],
     ];
 
@@ -36,7 +32,7 @@ class RestaurantMap extends Component
     public function getRestaurantsData()
     {
         $query = Restaurant::query()
-            ->where('is_active', true)
+            ->published()
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
@@ -56,17 +52,13 @@ class RestaurantMap extends Component
             $query->where('city', 'like', "%{$this->city}%");
         }
 
-        if ($this->priceRange) {
-            $query->where('price_range', $this->priceRange);
-        }
-
         $restaurants = $query->limit(200)->get();
         $this->total = $restaurants->count();
 
         $features = [];
         foreach ($restaurants as $r) {
             $features[] = [
-                'type' => 'Feature',
+                'type' => 'Point',
                 'geometry' => [
                     'type' => 'Point',
                     'coordinates' => [(float)$r->longitude, (float)$r->latitude]
@@ -77,9 +69,13 @@ class RestaurantMap extends Component
                     'address' => $r->address,
                     'city' => $r->city,
                     'cuisine' => $r->cuisine_type,
-                    'price_range' => $r->price_range,
                     'rating' => $r->average_rating,
-                    'image' => $r->logo ? asset('storage/'.$r->logo) : null,
+                    // La photo de couverture est l'illustration renseignee en base ;
+                    // le logo n'est qu'un repli (il est nul sur la quasi-totalite
+                    // des fiches, d'ou les popups sans image).
+                    'image' => $r->cover_image
+                        ? asset('storage/'.$r->cover_image)
+                        : ($r->logo ? asset('storage/'.$r->logo) : null),
                     'url' => route('restaurants.show', $r->slug),
                     'is_favorited' => auth()->check() ? $r->favoritedBy(auth()->id()) : false,
                 ]
@@ -94,7 +90,7 @@ class RestaurantMap extends Component
 
     public function resetFilters()
     {
-        $this->reset(['search', 'cuisine', 'city', 'priceRange']);
+        $this->reset(['search', 'cuisine', 'city']);
     }
 
     public function toggleViewMode()
@@ -135,7 +131,7 @@ class RestaurantMap extends Component
 
         // Les types de cuisine viennent de la base : une liste écrite en dur
         // dans la vue finit toujours par diverger des valeurs réelles.
-        $cuisines = Restaurant::where('is_active', true)
+        $cuisines = Restaurant::published()
             ->whereNotNull('cuisine_type')
             ->distinct()
             ->orderBy('cuisine_type')
@@ -144,6 +140,6 @@ class RestaurantMap extends Component
         return view('livewire.restaurant-map', [
             'menus' => $menusData,
             'cuisines' => $cuisines,
-        ]);
+        ])->extends('components.front.layouts.front');
     }
 }

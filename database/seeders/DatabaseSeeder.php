@@ -34,5 +34,8 @@ class DatabaseSeeder extends Seeder
         // 3. Contenu de démonstration : 10 restaurants abidjanais, 48 plats,
         //    illustrés par les photos de storage/app/public.
         $this->call(DemoContentSeeder::class);
+
+        // 4. Comptes livreurs : sans eux, l'espace /delivery reste inaccessible.
+        $this->call(DeliveryPersonSeeder::class);
     }
 }

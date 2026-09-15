@@ -41,11 +41,23 @@
                                 <i class="ri-map-pin-line text-brand-red text-sm"></i>
                                 {{ $restaurant->address }}, {{ $restaurant->city }}
                             </span>
-                            <span class="flex items-center gap-1.5">
-                                <i class="ri-price-tag-3-line text-brand-red text-sm"></i>
-                                Gamme : <span class="font-bold text-white">{{ $restaurant->price_range }}</span>
-                            </span>
+                            
                         </div>
+                    </div>
+
+                    {{-- Affichette QR a imprimer : le client scanne et arrive
+                         directement sur la carte pour commander ou reserver. --}}
+                    <div class="flex-shrink-0 flex flex-wrap items-center gap-3">
+                        @auth
+                            <livewire:favorite-toggle :restaurant-id="$restaurant->id" />
+                        @endauth
+
+                        <a href="{{ route('restaurants.qrcode', $restaurant->slug) }}"
+                           target="_blank" rel="noopener"
+                           class="inline-flex items-center gap-2 bg-white hover:bg-brand-red hover:text-white text-brand-black text-xs font-semibold uppercase tracking-wider px-5 py-3 rounded-sm transition-colors">
+                            <i class="ri-qr-code-line text-base"></i>
+                            QR code de la carte
+                        </a>
                     </div>
                 </div>
             </div>
@@ -100,8 +112,12 @@
                                 </span>
 
                                 @if($menu->is_available ?? true)
+                                    {{-- Cette vue n'est pas un composant Livewire : wire:click y est
+                                         inerte. On passe donc par le dispatch JS global, ecoute par
+                                         le composant Cart du header (#[On('addToCart')]). --}}
                                     <button
-                                        wire:click="$dispatch('addToCart', { menuId: {{ $menu->id }} })"
+                                        type="button"
+                                        data-add-to-cart="{{ $menu->id }}"
                                         class="btn-add px-4 py-1.5 rounded-sm bg-white hover:bg-brand-black text-brand-black hover:text-white border border-brand-black font-semibold text-xs transition-all duration-300">
                                         Ajouter au panier
                                     </button>
@@ -186,4 +202,24 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-add-to-cart]');
+
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (typeof window.Livewire === 'undefined') {
+            return;
+        }
+
+        window.Livewire.dispatch('addToCart', { menuId: Number(button.dataset.addToCart) });
+    });
+</script>
+@endpush
 @endsection

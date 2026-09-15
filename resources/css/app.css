@@ -40,3 +40,81 @@
         opacity: 0.7;
     }
 }
+
+/* Custom Leaflet Map Pins for High Contrast Visibility */
+.custom-marker-wrapper {
+    background: transparent !important;
+    border: none !important;
+}
+
+.custom-marker-pin {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #E52E20 0%, #A9271E 100%);
+    border: 3px solid #FFFFFF;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(169, 39, 30, 0.45), 0 3px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.custom-marker-pin:hover {
+    transform: rotate(-45deg) scale(1.2);
+    background: linear-gradient(135deg, #FF3B2D 0%, #C41F15 100%);
+    box-shadow: 0 12px 28px rgba(169, 39, 30, 0.6), 0 5px 10px rgba(0, 0, 0, 0.35);
+}
+
+.custom-marker-icon {
+    transform: rotate(45deg);
+    color: #FFFFFF;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Popup styling */
+.custom-popup .leaflet-popup-content-wrapper {
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15), 0 8px 12px -6px rgba(0, 0, 0, 0.08);
+    border: 1px solid #F1F5F9;
+    padding: 0;
+    overflow: hidden;
+}
+
+.custom-popup .leaflet-popup-content {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.custom-popup .leaflet-popup-tip {
+    background: #FFFFFF;
+}
+
+/* Marker Cluster Custom Style */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+    background-color: rgba(169, 39, 30, 0.25) !important;
+    border-radius: 50% !important;
+}
+
+.marker-cluster div {
+    width: 38px !important;
+    height: 38px !important;
+    margin-left: 4px !important;
+    margin-top: 4px !important;
+    background: #A9271E !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 6px 16px rgba(169, 39, 30, 0.5) !important;
+    border: 3px solid #FFFFFF !important;
+}

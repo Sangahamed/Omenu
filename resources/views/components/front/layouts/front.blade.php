@@ -27,7 +27,12 @@
     @stack('styles')
 </head>
 
-<body class="bg-bg text-ink font-sans antialiased h-full flex flex-col justify-between">
+<body class="bg-bg text-ink font-sans antialiased h-full flex flex-col justify-between"
+      @auth data-user-id="{{ auth()->id() }}" @endauth>
+
+    @auth
+        <script>window.authUserId = {{ auth()->id() }};</script>
+    @endauth
     
     @include('components.front.layouts.header')
 

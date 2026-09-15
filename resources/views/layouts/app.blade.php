@@ -12,14 +12,23 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
         <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js','resources/js/restaurant-map.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/restaurant-map.js'])
+        @livewireStyles
+        @stack('styles')
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased"
+          @auth data-user-id="{{ auth()->id() }}" @endauth>
+
+        @auth
+            <script>window.authUserId = {{ auth()->id() }};</script>
+        @endauth
+
         <div class="min-h-screen bg-bg">
             <livewire:layout.navigation />
 
@@ -37,5 +46,8 @@
                 {{ $slot }}
             </main>
         </div>
+
+        @livewireScripts
+        @stack('scripts')
     </body>
 </html>

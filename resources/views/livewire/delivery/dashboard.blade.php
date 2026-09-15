@@ -6,7 +6,7 @@
                 <h1 class="text-2xl font-display font-semibold text-ink">Dashboard Livreur</h1>
                 <p class="text-ink-soft text-sm">Bonjour, {{ auth()->user()->name }}</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
                 <button wire:click="toggleStatus('available')"
                         class="px-4 py-2 rounded-sm {{ $status === 'available' ? 'bg-brand-black text-white' : 'bg-white border border-border text-ink-soft' }} transition">
                     <i class="ri-check-line"></i> Disponible
@@ -15,6 +15,11 @@
                         class="px-4 py-2 rounded-sm {{ $status === 'offline' ? 'bg-brand-red text-white' : 'bg-white border border-border text-ink-soft' }} transition">
                     <i class="ri-close-line"></i> Hors ligne
                 </button>
+
+                <a href="{{ route('delivery.stats') }}"
+                   class="px-4 py-2 rounded-sm bg-white border border-brand-black text-brand-black hover:bg-brand-black hover:text-white transition inline-flex items-center gap-1.5">
+                    <i class="ri-bar-chart-2-line"></i> Mes statistiques
+                </a>
             </div>
         </div>
     </div>

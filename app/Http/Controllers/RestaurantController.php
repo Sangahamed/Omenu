@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Restaurant;
+use App\Models\User;
+use App\Notifications\RestaurantSubmitted;
+use App\Support\QrCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class RestaurantController extends Controller
@@ -15,7 +19,7 @@ class RestaurantController extends Controller
     public function index(Request $request)
     {
         $restaurants = Restaurant::query()
-            ->where('is_active', true)
+            ->published()
             ->when($request->filled('q'), function ($query) use ($request) {
                 $search = $request->string('q');
                 $query->where(function ($q) use ($search) {
@@ -37,9 +41,20 @@ class RestaurantController extends Controller
      * Fiche restaurant + sa carte.
      * GET /restaurants/{slug}
      */
-    public function show($slug)
+    public function show(Request $request, $slug)
     {
         $restaurant = Restaurant::with('menus')->where('slug', $slug)->firstOrFail();
+
+        // Une fiche non validee reste accessible a son proprietaire et aux
+        // administrateurs (pour relecture), mais pas au public.
+        if (! $restaurant->is_verified || ! $restaurant->is_active) {
+            $user = $request->user();
+
+            $canPreview = $user
+                && ($user->id === $restaurant->user_id || $user->hasRole(['super-admin', 'admin']));
+
+            abort_unless($canPreview, 404);
+        }
 
         return view('restaurant.show', compact('restaurant'));
     }
@@ -76,18 +91,10 @@ class RestaurantController extends Controller
             'price_range' => 'nullable|string|max:10',
         ]);
 
-        $slug = Str::slug($validated['name']);
-        $originalSlug = $slug;
-        $i = 1;
-        while (Restaurant::where('slug', $slug)->exists()) {
-            $slug = "{$originalSlug}-{$i}";
-            $i++;
-        }
-
         $restaurant = Restaurant::create([
             ...$validated,
             'user_id' => $request->user()->id,
-            'slug' => $slug,
+            'slug' => Restaurant::uniqueSlug($validated['name']),
             'country' => "Côte d'Ivoire",
             'is_active' => true,
             'is_verified' => false,
@@ -99,7 +106,75 @@ class RestaurantController extends Controller
             $request->user()->assignRole('restaurant');
         }
 
-        return redirect()->route('restaurant.dashboard')
-            ->with('success', 'Votre restaurant "' . $restaurant->name . '" a été créé. Il sera vérifié prochainement par notre équipe.');
+        // Prévient les administrateurs qu'une fiche attend leur validation :
+        // sans cela, la demande n'apparaissait nulle part dans le back-office.
+        $admins = User::role(['super-admin', 'admin'])->get();
+
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new RestaurantSubmitted($restaurant));
+        }
+
+        // Le tableau de bord restaurateur n'a pas de sens tant que la fiche
+        // n'est pas validée : on dirige vers l'écran d'attente dédié.
+        return redirect()->route('restaurant.pending')
+            ->with('success', 'Votre restaurant "' . $restaurant->name . '" a été soumis. Notre équipe le valide sous 24 à 48 h.');
+    }
+
+    /**
+     * Écran d'attente affiché tant que la fiche n'est pas validée.
+     * GET /restaurant/en-attente
+     */
+    public function pending(Request $request)
+    {
+        $restaurant = Restaurant::where('user_id', $request->user()->id)->latest()->first();
+
+        if (! $restaurant) {
+            return redirect()->route('restaurants.create');
+        }
+
+        // Fiche déjà validée : l'écran d'attente n'a plus lieu d'être.
+        if ($restaurant->is_verified) {
+            return redirect()->route('restaurant.dashboard');
+        }
+
+        return view('restaurant.pending', compact('restaurant'));
+    }
+
+    /**
+     * Affiche du restaurant : une page prête à imprimer avec le QR code qui
+     * mène à la fiche publique (carte + commande / réservation).
+     * GET /restaurants/{slug}/qr-code
+     */
+    public function qrCode($slug)
+    {
+        $restaurant = Restaurant::where('slug', $slug)->firstOrFail();
+
+        $url = route('restaurants.show', $restaurant->slug);
+
+        return view('restaurant.qrcode', [
+            'restaurant' => $restaurant,
+            'url' => $url,
+            'qr' => QrCode::dataUri($url, 520),
+        ]);
+    }
+
+    /**
+     * Le même QR code en SVG brut, pour l'intégrer à un flyer ou un menu.
+     * GET /restaurants/{slug}/qr-code.svg
+     */
+    public function qrCodeSvg(Request $request, $slug)
+    {
+        $restaurant = Restaurant::where('slug', $slug)->firstOrFail();
+
+        $svg = QrCode::svg(route('restaurants.show', $restaurant->slug), 1024);
+
+        $disposition = $request->boolean('download')
+            ? 'attachment; filename="qr-'.Str::slug($restaurant->name).'.svg"'
+            : 'inline';
+
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml',
+            'Content-Disposition' => $disposition,
+        ]);
     }
 }

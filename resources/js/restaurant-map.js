@@ -32,19 +32,20 @@ class RestaurantMap {
 
         L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            subdomains: 'abcd',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         }).addTo(this.map);
 
         this.markerCluster = L.markerClusterGroup({
             spiderfyOnMaxZoom: true,
-            maxClusterRadius: 50,
+            maxClusterRadius: 40,
             showCoverageOnHover: false
         });
         
         this.map.addLayer(this.markerCluster);
 
-        
         this.map.on('zoomend', () => {
             if (this.rawRestaurantsData.length > 0) {
                 this.updateMarkers(this.rawRestaurantsData, false); 
@@ -81,20 +82,15 @@ class RestaurantMap {
         }
     }
 
-    /**
-     * Calcule la taille modulaire du marqueur selon le niveau de zoom
-     * Zoom élevé (> 14) -> Grand & très visible (restaurants éloignés)
-     * Zoom faible (< 12) -> Moyen à petit (éviter la surcharge visuelle)
-     */
     getDynamicIconSize() {
         const zoom = this.map ? this.map.getZoom() : 12;
         
         if (zoom >= 15) {
-            return { size: 42, iconClass: 'text-lg', pinSize: 'w-10 h-10' }; 
+            return { size: 44, iconClass: 'text-lg', pinSize: 'w-11 h-11' }; 
         } else if (zoom <= 11) {
-            return { size: 26, iconClass: 'text-xs', pinSize: 'w-7 h-7' }; 
+            return { size: 30, iconClass: 'text-xs', pinSize: 'w-8 h-8' }; 
         } else {
-            return { size: 34, iconClass: 'text-sm', pinSize: 'w-8.5 h-8.5' }; 
+            return { size: 36, iconClass: 'text-sm', pinSize: 'w-9.5 h-9.5' }; 
         }
     }
 
@@ -119,42 +115,45 @@ class RestaurantMap {
                 icon: this.getCustomIcon(iconConfig)
             });
 
-            const popupContent = `
-                <div class="p-4 font-sans min-w-[240px]">
+            const cuisineBadge = feature.properties.cuisine 
+                ? `<span class="inline-block px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-bold uppercase tracking-wider mb-1.5">${feature.properties.cuisine}</span>`
+                : '';
 
-                    <h4 class="font-serif text-base font-bold text-slate-900 mb-1">
+            // Photo de couverture du restaurant : `image` vaut null quand aucune
+            // illustration n'est renseignee, on retombe alors sur une bande neutre.
+            const cover = feature.properties.image
+                ? `<img src="${feature.properties.image}" alt="${feature.properties.name}"
+                        loading="lazy"
+                        class="w-full h-32 object-cover block"
+                        onerror="this.closest('.popup-cover').innerHTML='<div class=&quot;w-full h-32 flex items-center justify-center bg-slate-100 text-slate-400&quot;><i class=&quot;ri-restaurant-2-line text-3xl&quot;></i></div>'">`
+                : `<div class="w-full h-32 flex items-center justify-center bg-slate-100 text-slate-400">
+                       <i class="ri-restaurant-2-line text-3xl"></i>
+                   </div>`;
+
+            const popupContent = `
+                <div class="popup-cover">${cover}</div>
+                <div class="p-4 font-sans min-w-[240px]">
+                    ${cuisineBadge}
+                    <h4 class="font-display font-bold text-base text-slate-900 mb-1 leading-snug">
                         ${feature.properties.name}
                     </h4>
 
-                    <div class="flex items-center gap-1 text-xs text-slate-500 mb-3">
-                        <i class="ri-map-pin-line text-amber-500"></i>
-                        <span>${feature.properties.address || feature.properties.city}</span>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
+                        <i class="ri-map-pin-2-fill text-red-600"></i>
+                        <span class="font-medium">${feature.properties.address || feature.properties.city || 'Abidjan'}</span>
                     </div>
 
-                    <div class="flex items-center justify-between border-t border-slate-200 pt-3">
-
-                        <div>
-                            <p class="text-[11px] uppercase text-slate-400 tracking-wide">
-                                Gamme
-                            </p>
-                            <span class="font-bold text-amber-600">
-                                ${feature.properties.price_range || '€€'}
-                            </span>
-                        </div>
-
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
                         <a href="${feature.properties.url}"
-                        class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-2 text-sm font-semibold no-underline transition-all duration-300 hover:scale-105 hover:from-violet-700 hover:to-cyan-700"
-                        style="color:#fff !important; text-decoration:none !important;">
-                            <i class="ri-restaurant-line mr-1"></i>
-                            Voir le menu
+                           class="w-full text-center px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-red-600 text-white text-xs font-semibold shadow-md transition-all duration-200 no-underline block"
+                           style="color:#fff !important; text-decoration:none !important;">
+                            <i class="ri-restaurant-2-line mr-1"></i> Voir l'établissement
                         </a>
-
                     </div>
-
                 </div>
             `;
 
-            marker.bindPopup(popupContent, { maxWidth: 260, className: 'custom-popup' });
+            marker.bindPopup(popupContent, { maxWidth: 280, className: 'custom-popup' });
             this.markerCluster.addLayer(marker);
             bounds.extend([lat, lng]);
         });
@@ -167,26 +166,18 @@ class RestaurantMap {
     }
 
     getCustomIcon(config) {
-        
-        const svgIcon = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-1/2 h-1/2 text-slate-950">
-                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                <path d="M7 2v20"/>
-                <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
-            </svg>
-        `;
-
         return L.divIcon({
             className: 'custom-marker-wrapper',
             html: `
-                <div class="relative ${config.pinSize} bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-xl border-2 border-slate-950 flex items-center justify-center transform hover:scale-110 transition-transform duration-200">
-                    ${svgIcon}
-                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-amber-600 rotate-45 border-r border-b border-slate-950 -z-10"></div>
+                <div class="custom-marker-pin">
+                    <div class="custom-marker-icon">
+                        <i class="ri-restaurant-fill"></i>
+                    </div>
                 </div>
             `,
-            iconSize: [config.size, config.size],
-            iconAnchor: [config.size / 2, config.size],
-            popupAnchor: [0, -config.size]
+            iconSize: [38, 38],
+            iconAnchor: [19, 38],
+            popupAnchor: [0, -38]
         });
     }
 }

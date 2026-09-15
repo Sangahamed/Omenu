@@ -3,6 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Restaurant;
+use App\Notifications\RestaurantApproved;
+use App\Notifications\RestaurantRejected;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -13,6 +16,16 @@ class RestaurantManager extends Component
     public $name, $description, $address, $city, $latitude, $longitude, $phone, $email, $cuisine_type, $price_range, $is_active;
     public $restaurantId;
     public $isEditing = false;
+
+    /**
+     * Onglet courant. « pending » liste les fiches qui attendent une
+     * validation : c'est l'ecran qui manquait pour traiter les demandes
+     * envoyees depuis /restaurant/create.
+     */
+    #[Url(as: 'filter', except: 'all')]
+    public string $filter = 'all';
+
+    public string $search = '';
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -28,10 +41,42 @@ class RestaurantManager extends Component
         'is_active' => 'boolean',
     ];
 
+    public function updatingFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function setFilter(string $filter): void
+    {
+        $this->filter = $filter;
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $restaurants = Restaurant::paginate(10);
-        return view('livewire.admin.restaurant-manager', compact('restaurants'));
+        $restaurants = Restaurant::query()
+            ->with('user')
+            ->when($this->search !== '', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('city', 'like', "%{$this->search}%");
+                });
+            })
+            ->when($this->filter === 'pending', fn ($q) => $q->where('is_verified', false))
+            ->when($this->filter === 'verified', fn ($q) => $q->where('is_verified', true))
+            ->when($this->filter === 'inactive', fn ($q) => $q->where('is_active', false))
+            ->latest()
+            ->paginate(10);
+
+        return view('livewire.admin.restaurant-manager', [
+            'restaurants' => $restaurants,
+            'pendingCount' => Restaurant::where('is_verified', false)->count(),
+        ])->layout('layouts.app');
     }
 
     public function resetInput()
@@ -49,14 +94,19 @@ class RestaurantManager extends Component
         $this->is_active = true;
         $this->restaurantId = null;
         $this->isEditing = false;
+        $this->resetValidation();
     }
 
     public function store()
     {
         $this->validate();
+
         Restaurant::create([
             'user_id' => auth()->id(),
             'name' => $this->name,
+            // La colonne slug est NOT NULL et unique : sans elle, la creation
+            // echouait sur une contrainte SQL.
+            'slug' => Restaurant::uniqueSlug($this->name),
             'description' => $this->description,
             'address' => $this->address,
             'city' => $this->city,
@@ -67,7 +117,10 @@ class RestaurantManager extends Component
             'cuisine_type' => $this->cuisine_type,
             'price_range' => $this->price_range,
             'is_active' => $this->is_active ?? true,
+            // Cree depuis le back-office : deja valide.
+            'is_verified' => true,
         ]);
+
         session()->flash('message', 'Restaurant créé avec succès.');
         $this->resetInput();
     }
@@ -93,9 +146,11 @@ class RestaurantManager extends Component
     public function update()
     {
         $this->validate();
+
         $restaurant = Restaurant::findOrFail($this->restaurantId);
         $restaurant->update([
             'name' => $this->name,
+            'slug' => Restaurant::uniqueSlug($this->name, $restaurant->id),
             'description' => $this->description,
             'address' => $this->address,
             'city' => $this->city,
@@ -107,13 +162,61 @@ class RestaurantManager extends Component
             'price_range' => $this->price_range,
             'is_active' => $this->is_active,
         ]);
+
         session()->flash('message', 'Restaurant mis à jour.');
         $this->resetInput();
+    }
+
+    /**
+     * Valide la fiche : elle devient visible du public et son proprietaire
+     * accede enfin a son tableau de bord.
+     */
+    public function approve($id): void
+    {
+        $restaurant = Restaurant::findOrFail($id);
+        $restaurant->update(['is_verified' => true, 'is_active' => true]);
+
+        if ($owner = $restaurant->user) {
+            if (! $owner->hasRole('restaurant')) {
+                $owner->assignRole('restaurant');
+            }
+
+            $owner->notify(new RestaurantApproved($restaurant));
+        }
+
+        $this->dispatch('notify', type: 'success', message: "{$restaurant->name} est validé et en ligne.");
+    }
+
+    /**
+     * Retire la validation : la fiche repasse en attente et sort des listes
+     * publiques, sans etre supprimee.
+     */
+    public function reject($id): void
+    {
+        $restaurant = Restaurant::findOrFail($id);
+        $restaurant->update(['is_verified' => false]);
+
+        $restaurant->user?->notify(new RestaurantRejected($restaurant));
+
+        $this->dispatch('notify', type: 'warning', message: "{$restaurant->name} repasse en attente de validation.");
+    }
+
+    public function toggleActive($id): void
+    {
+        $restaurant = Restaurant::findOrFail($id);
+        $restaurant->update(['is_active' => ! $restaurant->is_active]);
+
+        $this->dispatch(
+            'notify',
+            type: 'info',
+            message: $restaurant->is_active ? "{$restaurant->name} réactivé." : "{$restaurant->name} désactivé."
+        );
     }
 
     public function delete($id)
     {
         Restaurant::findOrFail($id)->delete();
-        session()->flash('message', 'Restaurant supprimé.');
+
+        $this->dispatch('notify', type: 'success', message: 'Restaurant supprimé.');
     }
 }

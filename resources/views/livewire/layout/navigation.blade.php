@@ -23,21 +23,36 @@ new class extends Component
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
-                        <x-application-logo class="block h-9 w-auto fill-current text-brand-black" />
+                    <a href="{{ route('home') }}">
+                        <span class="font-display text-2xl font-semibold tracking-tight text-brand-black">
+                            O<span class="text-brand-red">Menu</span>
+                        </span>
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
+                    <x-nav-link :href="route('home')">
+                        {{ __('Accueil') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('space')" :active="request()->routeIs('dashboard') || request()->routeIs('*.dashboard')">
+                        {{ __('Mon Espace') }}
+                    </x-nav-link>
+                    @if(auth()->user()->hasRole(['super-admin', 'admin']))
+                        <x-nav-link :href="route('admin.restaurants')" :active="request()->routeIs('admin.restaurants')">
+                            {{ __('Restaurants (Admin)') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
+                            {{ __('Utilisateurs') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
             <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-3">
+                <livewire:notification-bell />
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-ink-soft bg-white hover:text-brand-black focus:outline-none transition ease-in-out duration-150">
@@ -81,9 +96,20 @@ new class extends Component
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                {{ __('Dashboard') }}
+            <x-responsive-nav-link :href="route('home')">
+                {{ __('Accueil') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('space')" :active="request()->routeIs('dashboard') || request()->routeIs('*.dashboard')">
+                {{ __('Mon Espace') }}
+            </x-responsive-nav-link>
+            @if(auth()->user()->hasRole(['super-admin', 'admin']))
+                <x-responsive-nav-link :href="route('admin.restaurants')" :active="request()->routeIs('admin.restaurants')">
+                    {{ __('Restaurants (Admin)') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
+                    {{ __('Utilisateurs') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

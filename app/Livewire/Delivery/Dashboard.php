@@ -19,6 +19,13 @@ class Dashboard extends Component
     public function mount()
     {
         $this->user = Auth::user();
+
+        // Le statut doit refléter la disponibilité enregistrée : figé à
+        // « available », il réaffichait le livreur comme disponible après
+        // chaque rechargement et relançait le suivi GPS automatiquement,
+        // même s'il s'était mis hors ligne.
+        $this->status = $this->user->is_delivery_available ? 'available' : 'offline';
+
         $this->loadOrders();
     }
 
@@ -62,7 +69,18 @@ class Dashboard extends Component
 
     public function markAsDelivered($orderId)
     {
-        $order = Order::findOrFail($orderId);
+        // Restreint à ses propres courses : sans ce filtre, un livreur pouvait
+        // clôturer la commande d'un autre en devinant son identifiant.
+        $order = Order::where('delivery_person_id', $this->user->id)
+            ->where('status', 'picked_up')
+            ->find($orderId);
+
+        if (! $order) {
+            $this->dispatch('notify', type: 'error', message: "Cette course ne vous est pas attribuée.");
+
+            return;
+        }
+
         $order->update([
             'status' => 'delivered',
             'delivered_at' => now(),
@@ -71,7 +89,7 @@ class Dashboard extends Component
         broadcast(new \App\Events\OrderStatusUpdated($order));
 
         $this->loadOrders();
-        $this->dispatch('notify', message: 'Livraison terminée !');
+        $this->dispatch('notify', type: 'success', message: 'Livraison terminée !');
     }
 
     public function updateLocation($latitude, $longitude)
@@ -109,6 +127,6 @@ class Dashboard extends Component
         return view('livewire.delivery.dashboard', [
             'availableOrders' => $this->availableOrders,
             'myOrders' => $this->myOrders,
-        ])->layout('components.front.layouts.front');
+        ])->extends('components.front.layouts.front');
     }
 }

@@ -1,15 +1,33 @@
-<div
-    x-show="open"
-    @click.away="open = false"
-    x-transition:enter="transition ease-out duration-200"
-    x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-    x-transition:leave="transition ease-in duration-150"
-    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-    x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-    class="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-sm border border-brand-black shadow-[0_12px_32px_rgba(0,0,0,0.16)] z-50 overflow-hidden"
-    style="display: none;"
->
+<div class="relative" x-data="{ open: false }">
+    {{-- Bouton déclencheur du panier --}}
+    <button
+        type="button"
+        @click="open = !open"
+        class="relative inline-flex items-center gap-1.5 px-3 py-2 border border-border hover:border-brand-black rounded-sm text-xs font-semibold text-ink bg-white transition-all"
+        aria-label="Mon panier"
+    >
+        <i class="ri-shopping-bag-3-line text-sm text-brand-red"></i>
+        <span>Panier</span>
+        @if($itemCount > 0)
+            <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 bg-brand-red text-white text-[10px] font-bold rounded-full">
+                {{ $itemCount }}
+            </span>
+        @endif
+    </button>
+
+    {{-- Menu déroulant du panier --}}
+    <div
+        x-show="open"
+        @click.away="open = false"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+        class="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-sm border border-brand-black shadow-[0_12px_32px_rgba(0,0,0,0.16)] z-50 overflow-hidden"
+        style="display: none;"
+    >
 
     {{-- ============================================================
          EN-TÊTE
@@ -221,4 +239,5 @@
 
     @endif
 
+    </div>
 </div>

@@ -9,16 +9,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Order extends Model
 {
     protected $fillable = [
-        'user_id', 'restaurant_id', 'delivery_person_id',
+        'user_id', 'restaurant_id', 'delivery_person_id', 'parent_id',
         'subtotal', 'delivery_fee', 'tax', 'discount', 'total',
         'status', 'payment_method', 'payment_id', 'payment_status',
         'delivery_address', 'delivery_instructions', 'customer_phone', 'customer_name',
-        'estimated_delivery_time', 'delivered_at', 'notes'
+        'estimated_delivery_time', 'notes',
+        // Horodatages du cycle de vie : sans eux dans le fillable, les
+        // `Order::create([...])` et `->update([...])` les perdaient en silence
+        // (la prise en charge par un livreur n'était jamais enregistrée, et
+        // les commandes multi-restaurants perdaient leur parent_id).
+        'accepted_at', 'preparing_at', 'ready_at', 'picked_up_at',
+        'delivered_at', 'cancelled_at',
     ];
 
     protected $casts = [
         'estimated_delivery_time' => 'datetime',
+        'accepted_at' => 'datetime',
+        'preparing_at' => 'datetime',
+        'ready_at' => 'datetime',
+        'picked_up_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
         'tax' => 'decimal:2',

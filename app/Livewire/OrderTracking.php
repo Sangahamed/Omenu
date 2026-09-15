@@ -47,6 +47,6 @@ class OrderTracking extends Component
 
     public function render()
     {
-        return view('livewire.order-tracking')->layout('components.front.layouts.front');
+        return view('livewire.order-tracking')->extends('components.front.layouts.front');
     }
 }

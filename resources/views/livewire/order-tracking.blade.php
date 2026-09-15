@@ -93,31 +93,57 @@
         ]).addTo(map)
         .bindPopup('{{ $order->restaurant->name }}');
 
-        // Marqueur du livreur (si disponible)
-        @if($deliveryLocation)
-            const deliveryMarker = L.marker([
+        // Marqueur du livreur : créé d'emblée si une position est déjà connue,
+        // sinon à la première mise à jour reçue.
+        let deliveryMarker = null;
+
+        @if($deliveryLocation && $deliveryLocation['lat'] && $deliveryLocation['lng'])
+            deliveryMarker = L.marker([
                 {{ $deliveryLocation['lat'] }},
                 {{ $deliveryLocation['lng'] }}
             ]).addTo(map)
-            .bindPopup('Livreur : {{ $deliveryPersonName }}');
-
-            // Écouter les mises à jour de position
-            Livewire.on('locationUpdated', (data) => {
-                deliveryMarker.setLatLng([data.latitude, data.longitude]);
-                map.panTo([data.latitude, data.longitude]);
-            });
-
-            // Après avoir créé le marqueur deliveryMarker
-            if (window.Echo) {
-                window.Echo.private('order.{{ $order->id }}')
-                    .listen('DeliveryLocationUpdated', (e) => {
-                        if (deliveryMarker) {
-                            deliveryMarker.setLatLng([e.latitude, e.longitude]);
-                            map.panTo([e.latitude, e.longitude]);
-                        }
-                    });
-            }
+            .bindPopup('Livreur : {{ $deliveryPersonName ?? 'en route' }}');
         @endif
+
+        function moveDelivery(lat, lng) {
+            if (lat === null || lng === null || typeof lat === 'undefined') return;
+
+            if (!deliveryMarker) {
+                deliveryMarker = L.marker([lat, lng]).addTo(map).bindPopup('Livreur');
+            } else {
+                deliveryMarker.setLatLng([lat, lng]);
+            }
+
+            map.panTo([lat, lng]);
+        }
+
+        Livewire.on('locationUpdated', (data) => {
+            const payload = Array.isArray(data) ? data[0] : data;
+            moveDelivery(payload.latitude, payload.longitude);
+        });
+
+        /*
+         * Canal privé de la commande : il porte à la fois la position du
+         * livreur et les changements de statut. L'écoute était auparavant
+         * imbriquée dans la condition ci-dessus — sans position de départ,
+         * le client
+         * ne recevait donc jamais rien, y compris les changements de statut.
+         */
+        if (window.Echo) {
+            window.Echo.private('order.{{ $order->id }}')
+                .listen('DeliveryLocationUpdated', (e) => {
+                    moveDelivery(e.latitude, e.longitude);
+                })
+                .listen('OrderStatusUpdated', (e) => {
+                    if (window.omenuToast) {
+                        window.omenuToast('Commande #{{ $order->id }} : ' + e.status_label, 'info');
+                    }
+
+                    // Recharge le composant pour refléter le nouveau statut.
+                    window.Livewire.dispatch('orderStatusUpdated');
+                    window.Livewire.dispatch('notificationsRefresh');
+                });
+        }
     });
 </script>
 @endpush

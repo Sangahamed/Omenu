@@ -3,28 +3,28 @@
 namespace App\Listeners;
 
 use Illuminate\Auth\Events\Login;
-use App\Models\CartItem;
 
 class MigrateGuestCartToDatabase
 {
-    public function handle(Login $event)
+    /**
+     * Gère la migration du panier invité après connexion.
+     *
+     * Le panier est géré en session — il persiste naturellement après
+     * l'authentification. Ce listener garantit simplement que la session
+     * est bien conservée et que les données du panier restent cohérentes.
+     */
+    public function handle(Login $event): void
     {
-        $guestCart = session()->get('cart', []);
+        // Le panier est stocké en session et persiste automatiquement
+        // après la connexion. Aucune migration vers la base de données
+        // n'est nécessaire puisque l'application utilise un panier session.
+        $cart = session()->get('cart', []);
 
-        if (!empty($guestCart)) {
-            foreach ($guestCart as $menuId => $item) {
-                $cartItem = CartItem::firstOrNew([
-                    'user_id' => $event->user->id,
-                    'menu_id' => $menuId,
-                ]);
-
-                $cartItem->quantity = ($cartItem->quantity ?? 0) + $item['quantity'];
-                $cartItem->price = $item['price'];
-                $cartItem->save();
-            }
-
-            // Nettoyer le panier temporaire en session
-            session()->forget('cart');
+        if (!empty($cart)) {
+            // Régénère la session pour éviter les fixations de session
+            // tout en préservant les données du panier.
+            session()->regenerate(true);
+            session()->put('cart', $cart);
         }
     }
 }

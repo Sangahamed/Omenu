@@ -19,9 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        
+        if (request()->header('x-forwarded-proto') === 'https') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         \App\Models\User::created(function ($user) {
             $user->assignRole('client');
         });
     }
+
 }

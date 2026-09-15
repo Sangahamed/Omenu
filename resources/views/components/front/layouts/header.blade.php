@@ -19,7 +19,7 @@
     }
 </style>
 
-<header class="vr-header sticky top-0 left-0 right-0 z-50 bg-white border-b border-brand-black transition-all duration-300">
+<header class="vr-header hidden md:block sticky top-0 left-0 right-0 z-50 bg-white border-b border-brand-black transition-all duration-300">
     <div class="container mx-auto px-4 h-20 flex items-center justify-between">
         <a href="/" class="flex items-center space-x-2 group">
             <span class="font-display text-2xl font-semibold tracking-tight text-brand-black">
@@ -49,6 +49,8 @@
             @endguest
 
             @auth
+                <livewire:notification-bell />
+
                 <livewire:cart />
 
                 <a href="{{ route('space') }}" class="border border-brand-black hover:bg-brand-black hover:text-white text-brand-black text-xs px-4 py-2 rounded-sm transition-all">
@@ -117,21 +119,23 @@
         const tabMenu = document.getElementById('vrTabMenu');
         const closeBtn = document.getElementById('vrCloseBtn');
 
-        function openMenu() {
+        window.openVrMenu = function() {
+            if (!overlay || !sidebar) return;
             overlay.style.opacity = '1';
             overlay.style.pointerEvents = 'all';
             sidebar.style.transform = 'translateX(0)';
             document.body.style.overflow = 'hidden';
-        }
+        };
 
         document.closeMenu = function() {
+            if (!overlay || !sidebar) return;
             overlay.style.opacity = '0';
             overlay.style.pointerEvents = 'none';
             sidebar.style.transform = 'translateX(100%)';
             document.body.style.overflow = '';
-        }
+        };
 
-        tabMenu?.addEventListener('click', openMenu);
+        tabMenu?.addEventListener('click', window.openVrMenu);
         closeBtn?.addEventListener('click', document.closeMenu);
         overlay?.addEventListener('click', document.closeMenu);
 

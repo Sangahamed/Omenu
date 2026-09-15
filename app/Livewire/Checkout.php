@@ -8,11 +8,9 @@ use App\Models\Menu;
 use App\Events\OrderPlaced;
 use Livewire\Component;
 use Stripe\Stripe;
-use Livewire\Attributes\Layout;
 use Stripe\Checkout\Session as StripeSession;
 use Illuminate\Support\Facades\Auth;
 
-#[Layout('components.front.layouts.front')]
 class Checkout extends Component
 {
     public $cart = [];
@@ -198,6 +196,9 @@ class Checkout extends Component
 
     public function render()
     {
-        return view('livewire.checkout');
+        // ->extends() et non ->layout() : la mise en page du front est de type
+        // @extends/@yield('content'). Avec ->layout(), Livewire y injecte un
+        // $slot que la vue n'utilise pas — la page se rendait vide.
+        return view('livewire.checkout')->extends('components.front.layouts.front');
     }
 }

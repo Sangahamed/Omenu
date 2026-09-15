@@ -32,6 +32,8 @@ class Dashboard extends Component
             'total_revenue' => Order::where('status', 'delivered')->sum('total'),
             'pending_orders' => Order::where('status', 'pending')->count(),
             'active_restaurants' => Restaurant::where('is_active', true)->count(),
+            // Fiches soumises depuis /restaurant/create et pas encore validees.
+            'pending_restaurants' => Restaurant::where('is_verified', false)->count(),
         ];
     }
 
