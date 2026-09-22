@@ -94,7 +94,9 @@
                             <div class="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
                                 <div class="relative h-48 overflow-hidden bg-slate-100">
                                     @if($menu['image'])
-                                        <img src="{{ $menu['image'] }}" alt="{{ $menu['name'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
+                                        <img src="{{ $menu['image'] }}" alt="{{ $menu['name'] }}"
+                                             loading="lazy" decoding="async"
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-slate-300 bg-slate-100">
                                             <i class="ri-restaurant-2-line text-5xl"></i>

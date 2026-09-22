@@ -15,7 +15,12 @@ class RestaurantMap extends Component
     // Propriétés de statut simples
     public $total = 0;
     public $viewMode = 'map';
-    public $isSidebarOpen = true;
+
+    // Fermee par defaut : sur mobile la sidebar occupe toute la largeur, donc
+    // l'ouvrir au chargement faisait demarrer la page sur les filtres au lieu
+    // de la carte. Sur desktop l'affichage ne depend pas de ce drapeau
+    // (la classe md:translate-x-0 garde la colonne visible).
+    public $isSidebarOpen = false;
 
     protected $queryString = [
         'search' => ['except' => ''],

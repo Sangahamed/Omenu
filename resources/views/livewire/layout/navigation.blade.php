@@ -45,6 +45,9 @@ new class extends Component
                         <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                             {{ __('Utilisateurs') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.messages')" :active="request()->routeIs('admin.messages')">
+                            {{ __('Messages') }}
+                        </x-nav-link>
                     @endif
                 </div>
             </div>

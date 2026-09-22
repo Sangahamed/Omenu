@@ -30,8 +30,7 @@
         <nav class="hidden md:flex items-center space-x-8">
             <a href="/" class="vr-nav-link active text-sm text-ink-soft hover:text-brand-black">Accueil</a>
             <a href="/restaurants" class="vr-nav-link text-sm text-ink-soft hover:text-brand-black">Découvrir</a>
-            <a href="/offres" class="vr-nav-link text-sm text-ink-soft hover:text-brand-black">Offres</a>
-            <a href="/contact" class="vr-nav-link text-sm text-ink-soft hover:text-brand-black">Contact</a>
+            <a href="{{ route('contact') }}" class="vr-nav-link text-sm text-ink-soft hover:text-brand-black">Contact</a>
         </nav>
 
         <div class="hidden md:flex items-center space-x-4">
@@ -83,8 +82,7 @@
         <nav class="flex flex-col space-y-4">
             <a href="/" class="text-lg font-display text-ink hover:text-brand-red transition-colors py-2 border-b border-border">Accueil</a>
             <a href="/restaurants" class="text-lg font-display text-ink hover:text-brand-red transition-colors py-2 border-b border-border">Découvrir</a>
-            <a href="/offres" class="text-lg font-display text-ink hover:text-brand-red transition-colors py-2 border-b border-border">Offres</a>
-            <a href="/contact" class="text-lg font-display text-ink hover:text-brand-red transition-colors py-2">Contact</a>
+            <a href="{{ route('contact') }}" class="text-lg font-display text-ink hover:text-brand-red transition-colors py-2">Contact</a>
         </nav>
     </div>
 

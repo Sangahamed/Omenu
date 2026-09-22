@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    // L'accueil affiche la carte, qui interroge la table restaurants :
+    // sans migrations, la requête échoue et la page renvoie 500.
+    use RefreshDatabase;
+
     /**
      * A basic test example.
      */

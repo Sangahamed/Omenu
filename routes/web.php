@@ -9,11 +9,13 @@ use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RestaurantController;
 
 use App\Livewire\Checkout;
+use App\Livewire\Contact;
 use App\Livewire\OrderTracking;
 use App\Livewire\Restaurant\Dashboard as RestaurantDashboard;
 use App\Livewire\Delivery\Dashboard as DeliveryDashboard;
 use App\Livewire\Delivery\Stats as DeliveryStats;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Admin\ContactMessages as AdminContactMessages;
 use App\Livewire\Admin\RestaurantManager as AdminRestaurantManager;
 use App\Livewire\Admin\UserManager as AdminUserManager;
 
@@ -35,6 +37,9 @@ Route::get('/restaurants/{slug}', [RestaurantController::class, 'show'])->name('
 // (carte, commande, reservation), et le QR seul en SVG.
 Route::get('/restaurants/{slug}/qr-code', [RestaurantController::class, 'qrCode'])->name('restaurants.qrcode');
 Route::get('/restaurants/{slug}/qr-code.svg', [RestaurantController::class, 'qrCodeSvg'])->name('restaurants.qrcode.svg');
+
+// Formulaire de contact public.
+Route::get('/contact', Contact::class)->name('contact');
 
 Route::get('/api/search', function (Request $request) {
     $query = $request->get('q');
@@ -136,6 +141,7 @@ Route::middleware(['auth', 'role:super-admin|admin'])->prefix('admin')->name('ad
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
     Route::get('/restaurants', AdminRestaurantManager::class)->name('restaurants');
     Route::get('/users', AdminUserManager::class)->name('users');
+    Route::get('/messages', AdminContactMessages::class)->name('messages');
 });
 
 /*
